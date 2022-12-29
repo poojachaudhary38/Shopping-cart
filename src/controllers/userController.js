@@ -32,6 +32,7 @@ const createUser = async function (req, res) {
     if (!isEmpty(address)) {
       return res.status(400).send({ status: "false", message: "Address must be present" });
     }
+    
     if (!isValidName(lname)) {
       return res.status(400).send({ status: "false", message: "last name must be in alphabetical order" });
     }
@@ -51,44 +52,51 @@ const createUser = async function (req, res) {
     // ------- Address Validation  --------
     if (address) {
       data.address = JSON.parse(data.address);
-      if (address.shipping) {
-        if (!isEmpty(address.shipping.street)) {
-          return res.status(400).send({ status: "false", message: "street must be present" });
+      const { shipping, billing } = req.body.address;
+      if (!isEmpty(shipping)) {
+        return res.status(400).send({ status: "false", message: "Shipping address must be present" });
+      }
+      if (shipping) {
+        if (!isEmpty(shipping.street)) {
+          return res.status(400).send({ status: "false", message: "Street must be present" });
         }
-        if (!isEmpty(address.shipping.city)) {
-          return res.status(400).send({ status: "false", message: "city must be present" });
+        if (!isEmpty(shipping.city)) {
+          return res.status(400).send({ status: "false", message: "City must be present" });
         }
-        if (!isEmpty(address.shipping.pincode)) {
-          return res.status(400).send({ status: "false", message: "pincode must be present" });
+        if (!isEmpty(shipping.pincode)) {
+          return res.status(400).send({ status: "false", message: "Pincode must be present" });
         }
-        if (!isValidStreet(address.shipping.street)) {
-          return res.status(400).send({ status: "false", message: "street should include no. & alphabets only" });
+        if (!isValidStreet(shipping.street)) {
+          return res.status(400).send({ status: "false", message: "Street should include no. & alphabets only" });
         }
-        if (!isValidName(address.shipping.city)) {
-          return res.status(400).send({ status: "false", message: "city should include alphabets only" });
+        if (!isValidName(shipping.city)) {
+          return res.status(400).send({ status: "false", message: "City should include alphabets only" });
         }
-        if (!isValidpincode(address.shipping.pincode)) {
-          return res.status(400).send({ status: "false", message: "pincode should be digits only" });
+        if (!isValidPincode(shipping.pincode)) {
+          return res.status(400).send({ status: "false", message: "Pincode should be in digits and should be only upto 6 digits" });
         }
       }
-      if (address.billing) {
-        if (!isEmpty(address.billing.street)) {
-          return res.status(400).send({ status: "false", message: "street must be present" });
+      if (!isEmpty(billing)) {
+        return res.status(400).send({ status: "false", message: "billing  address must be present" });
+      }
+      if (billing) {
+        if (!isEmpty(billing.street)) {
+          return res.status(400).send({ status: "false", message: "Street must be present" });
         }
-        if (!isEmpty(address.billing.city)) {
-          return res.status(400).send({ status: "false", message: "city must be present" });
+        if (!isEmpty(billing.city)) {
+          return res.status(400).send({ status: "false", message: "City must be present" });
         }
-        if (!isEmpty(address.billing.pincode)) {
-          return res.status(400).send({ status: "false", message: "pincode must be present" });
+        if (!isEmpty(billing.pincode)) {
+          return res.status(400).send({ status: "false", message: "Pincode must be present" });
         }
-        if (!isValidStreet(address.billing.street)) {
-          return res.status(400).send({ status: "false", message: "street should include no. and alphabets only" });
+        if (!isValidStreet(billing.street)) {
+          return res.status(400).send({ status: "false", message: "Street should include no. and alphabets only" });
         }
-        if (!isValidName(address.billing.city)) {
-          return res.status(400).send({ status: "false", message: "city should be in alphabetical order" });
+        if (!isValidName(billing.city)) {
+          return res.status(400).send({ status: "false", message: "City should be in alphabetical order" });
         }
-        if (!isValidpincode(address.billing.pincode)) {
-          return res.status(400).send({ status: "false", message: "pincode should be digits only" });
+        if (!isValidPincode(billing.pincode)) {
+          return res.status(400).send({ status: "false", message: "Pincode should be in digits and should be only upto 6 digits" });
         }
       }
     }
@@ -143,16 +151,16 @@ const userLogin = async function (req, res) {
 
     let checkEmail = await userModel.findOne({ email: email });
     if (!checkEmail) {
-      return res.status(401).send({ status: false, message: "Please provide a correct Email" });
+      return res.status(400).send({ status: false, message: "Please provide a correct Email" });
     }
 
     let checkPassword = await bcrypt.compare(password, checkEmail.password);
     if (!checkPassword) {
-      return res.status(401).send({ status: false, message: "Please provide a correct password" });
+      return res.status(400).send({ status: false, message: "Please provide a correct password" });
     }
 
     const userData = await userModel.findOne({ email: email })
-    if (!userData) { return res.status(401).send({ status: false, message: "Invalid Login Credentials! You need to register first." }) }
+    if (!userData) { return res.status(400).send({ status: false, message: "Invalid Login Credentials! You need to register first." }) }
 
     let token = jwt.sign({
       userId: checkEmail._id.toString(),
@@ -177,11 +185,9 @@ const getUser = async function (req, res) {
 
     let checkData = await userModel.findOne({ _id: userId });
     if (!checkData) {
-      return res.status(404).send({ status: false, message: "No data found" });
+      return res.status(404).send({ status: false, message: "userId not exist" });
     }
-    if(userId!=req.userId){
-      return res.status(404).send({ status: false, message: "put a correct userId that used in " })
-    }
+    
 
     return res.status(200).send({
       status: true, message: "Users Profile Details", data: checkData
@@ -205,7 +211,7 @@ const updateuserDetails = async function (req, res) {
     }
     let userIdDetail = await userModel.findById(userId)
     if (!userIdDetail) {
-      return res.status(404).send({ status: false, msg: " userId not found" })
+      return res.status(404).send({ status: false, msg: " userId doesn't exist" })
     }
 
     //--------------------------check body---------------------//
@@ -215,10 +221,7 @@ const updateuserDetails = async function (req, res) {
       return res.status(400).send({ status: false, message: "pls provided body" })
     }
 
-    // ----------------------Authorization---------------------
-    if (req.userId != userId) {
-      return res.status(401).send({ status: false, message: "You're not Authorized" })
-    }
+    
 
     //--------------------------destructure---------------------//
     let { fname, lname, email, phone, password, address, profileImage } = bodyData
@@ -294,60 +297,59 @@ const updateuserDetails = async function (req, res) {
     //-------------------------------------------address check----------------------------------------//
     if (address) {
       address = JSON.parse(address)
-      if (address.shipping != null) {
-        //----------------------check billing street-------------//
-        if (address.shipping.street != null) {
+
+      //----------------------check shipping street-------------//
+      if (address.shipping) {
+        if (address.shipping.street) {
           if (!isEmpty(address.shipping.street)) {
-            return res.status(400).send({ statsu: false, message: 'Please provide street address in shipping address.' })
+            return res.status(400).send({ status: false, message: "street is not valid in shipping address" })
           }
-          updateData['address.shipping.street'] = address.shipping.street
+
         }
-
-        //----------------------check shipping city-------------//
-
-        if (address.shipping.city != null) {
-          if (!isEmpty(address.shipping.city)) {
-            console.log(address.shipping.city)
-            return res.status(400).send({ statsu: false, message: 'Please provide City  in shipping address.' })
-          }
-          updateData['address.shipping.city'] = address.shipping.city
+        updateData['address.shipping.street'] = address.shipping.street
+      }
+      //----------------------check shipping city-------------//
+      if (address.shipping.city) {
+        if (!isValidName(address.shipping.city)) {
+          return res.status(400).send({ statsu: false, message: 'city is not valid in shipping address.' })
         }
-
-
-
-        //----------------------check shipping pincode-------------//
-        if (address.shipping.pincode != null) {
-          if (!isValidPincode(address.shipping.pincode)) {
-            return res.status(400).send({ status: false, message: ' Please provide a valid pincode in 6 digits' })
-          }
-          updateData['address.shipping.pincode'] = address.shipping.pincode
-        }
+        updateData['address.shipping.city'] = address.shipping.city
       }
 
-      //----------------------check billing street-------------//
-      if (address.billing != null) {
-        if (address.billing.street != null) {
-          if (isEmpty(address.billing.street)) {
-            return res.status(400).send({ statsu: false, message: 'Please provide street address in billing address.' })
-          }
-          updateData['address.billing.street'] = address.billing.street
-        }
 
-        //----------------------check billing city-------------//
-        if (address.billing.city != null) {
-          if (isEmpty(address.billing.street)) {
-            return res.status(400).send({ statsu: false, message: 'Please provide City in Billing address.' })
-          }
-          updateData['address.billing.city'] = address.billing.city
-        }
 
-        //----------------------check billing pincode-------------//
-        if (address.billing.pincode != null) {
-          if (!isValidPincode(address.billing.pincode)) {
-            return res.status(400).send({ status: false, message: ' Please provide a valid pincode in 6 digits' })
-          }
-          updateData['address.billing.pincode'] = address.billing.pincode
+      //----------------------check shipping pincode-------------//
+      if (address.shipping.pincode) {
+        if (!isValidPincode(address.shipping.pincode)) {
+          return res.status(400).send({ status: false, message: ' Please provide a valid pincode in 6 digits' })
         }
+        updateData['address.shipping.pincode'] = address.shipping.pincode
+      }
+    }
+
+    //----------------------check billing street-------------//
+    if (address.billing) {
+      if (address.billing.street) {
+        if (!isEmpty(address.billing.street)) {
+          return res.status(400).send({ status: false, message: "street is not valid in billing address" })
+        }
+        updateData['address.billing.street'] = address.billing.street
+      }
+
+      //----------------------check billing city-------------//
+      if (address.billing.city) {
+        if (!isValidName(address.billing.city)) {
+          return res.status(400).send({ status: false, message: "city is not valid in billing address" })
+        }
+        updateData['address.billing.city'] = address.billing.city
+
+      }
+      //----------------------check billing pincode-------------//
+      if (address.billing.pincode) {
+        if (!isValidPincode(address.billing.pincode)) {
+          return res.status(400).send({ status: false, message: ' Please provide a valid pincode in 6 digits' })
+        }
+        updateData['address.billing.pincode'] = address.billing.pincode
       }
     }
 
@@ -363,4 +365,5 @@ const updateuserDetails = async function (req, res) {
 
 
 module.exports = { createUser, userLogin, getUser, updateuserDetails };
+
 

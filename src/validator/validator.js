@@ -34,7 +34,7 @@ const isValidPhone = function (phone) {
 };
 
 // pincode Validation
-const isValidpincode = function (pincode) {
+const isValidPincode = function (pincode) {
   const pincodeRegex = /^[1-9][0-9]{5}$/;
   return pincodeRegex.test(pincode);
 };
@@ -72,6 +72,18 @@ const validPrice = function (price) {
   return /^\d{0,8}(\.\d{1,4})?$/.test(price);
 };
 
+//status validation
+const isValidStatus = (value) => 
+{ return ['pending', 'completed', 'cancelled'].indexOf(value) !== -1 }
+
+//number validation
+const isNumber = function (value) {
+  if (typeof (value) === 'undefined' || typeof (value) === 'null') return false
+  if (typeof (value) === 'number') return true
+
+}
+
+
 module.exports = {
   isEmpty,
   validSize,
@@ -79,12 +91,12 @@ module.exports = {
   isValidEmail,
   isValidPhone,
   isValidInputBody,
-  isValidpincode,
+  isValidPincode,
   isValidObjectId,
   isValidStreet,
   isValidFile,
   isValidPrice,
   isValidStyle,
   validPrice,
+  isValidStatus,isNumber
 };
-
